@@ -254,9 +254,8 @@ class NetdevKeeper:
             logging.info("COLLECT: device interface IPs")
             self.ip_ifs = napalm_device.get_interfaces_ip()
 
-            # Attempt to find onboarding extensions dynamically
             try:
-                module_name = f"netbox_onboarding.onboarding_extensions.{self.napalm_driver}"
+                module_name = PLUGIN_SETTINGS["onboarding_extensions_map"].get(self.napalm_driver)
                 module = importlib.import_module(module_name)
                 driver_addon_class = module.OnboardingDriverExtensions(
                     napalm_device=napalm_device
@@ -264,7 +263,7 @@ class NetdevKeeper:
                 self.onboarding_class = driver_addon_class.get_onboarding_class()
                 self.driver_addon_result = driver_addon_class.get_ext_result()
             except ImportError as exc:
-                logging.info(f"No onboarding extension for driver {self.napalm_driver} found")
+                logging.info(f"No onboarding extension found for driver {self.napalm_driver}")
 
         except ConnectionException as exc:
             raise OnboardException(reason="fail-login", message=exc.args[0])
